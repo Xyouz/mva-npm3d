@@ -27,7 +27,6 @@ import numpy as np
 
 # Import functions from scikit-learn
 from sklearn.preprocessing import label_binarize
-from sklearn.neighbors import KDTree
 
 from itertools import product
 
@@ -69,43 +68,69 @@ def grid_subsampling(points, voxel_size):
     #
 
     xyz_min = points.min(axis=0)
-    xyz_max = points.max(axis=0)
 
     out = {}
     for point in points:
         index = tuple(((point - xyz_min)//voxel_size).astype(int))
         try:
-            current_voxel = out[index]
-            out[index] = current_voxel.append(point)
+            out[index].append(point)
         except KeyError:
             out[index] = [point]
 
-    for index in out:
-        pass
-
-    # kdtree = KDTree(points, leaf_size=30, metric="chebyshev")
-
-    # linx = np.arange(xyz_min[0], xyz_max[0] + voxel_size/2, voxel_size)
-    # liny = np.arange(xyz_min[1], xyz_max[1] + voxel_size/2, voxel_size)
-    # linz = np.arange(xyz_min[2], xyz_max[2] + voxel_size/2, voxel_size)
-
-    # subsampled_points = []
-    # for x, y, z in product(linx, liny, linz):
-    #     neighbors = kdtree.query_radius(np.array([[x,y,z]]), r=voxel_size/2)[0]
-    #     if len(neighbors) > 0:
-    #         avg = np.mean(points[neighbors],axis=0)
-    #         subsampled_points.append(avg)
+    subsampled_points = np.zeros((len(out), 3))
+    for c, index in enumerate(out):
+        position = np.array(out[index]).mean(axis=0)
+        subsampled_points[c] = position
 
     return subsampled_points
 
 
 def grid_subsampling_colors(points, colors, voxel_size):
+    pointcolor = np.hstack((points, colors))
+    xyz_min = points.min(axis=0)
 
-    # YOUR CODE
-    subsampled_points = None
-    subsampled_colors = None
+    out = {}
+    for pc in pointcolor:
+        index = tuple(((pc[:3] - xyz_min)//voxel_size).astype(int))
+        try:
+            out[index].append(pc)
+        except KeyError:
+            out[index] = [pc]
 
-    return subsampled_points, subsampled_colors
+    subsampled_points = np.zeros((len(out), 3))
+    subsampled_colors = np.zeros((len(out), 3))
+    for c, index in enumerate(out):
+        position_color = np.array(out[index]).mean(axis=0)
+        subsampled_points[c] = position_color[:3]
+        subsampled_colors[c] = position_color[3:]
+    return subsampled_points, subsampled_colors.astype(np.uint8)
+
+def grid_subsampling_labels(points, colors, labels, voxel_size):    
+    xyz_min = points.min(axis=0)
+    label_min = labels.min()
+    label_max = labels.max()
+
+    bin_label = label_binarize(labels, classes = list(range(label_min, label_max + 1)))
+    pointcolor = np.hstack((points, colors, bin_label))
+
+    out = {}
+    for pc in pointcolor:
+        index = tuple(((pc[:3] - xyz_min)//voxel_size).astype(int))
+        try:
+            out[index].append(pc)
+        except KeyError:
+            out[index] = [pc]
+
+    subsampled_points = np.zeros((len(out), 3))
+    subsampled_colors = np.zeros((len(out), 3))
+    subsampled_labels = np.zeros(len(out), dtype=int)
+    for c, index in enumerate(out):
+        pos_col_lab = np.array(out[index])
+        position_color = pos_col_lab[:,:6].mean(axis=0)
+        subsampled_points[c] = position_color[:3]
+        subsampled_colors[c] = position_color[3:6]
+        subsampled_labels[c] = label_min + pos_col_lab[:,6:].sum(axis=0).argmax()
+    return subsampled_points, subsampled_colors.astype(np.uint8), subsampled_labels.astype(np.uint32)
 
 
 # ------------------------------------------------------------------------------------------
@@ -168,5 +193,23 @@ if __name__ == '__main__':
 
     # Save
     write_ply('../grid_subsampled.ply', [subsampled_points], ['x', 'y', 'z'])
+    
+    # Subsample with color
+    t0 = time.time()
+    subsampled_points, subsampled_colors = grid_subsampling_colors(points, colors, voxel_size)
+    t1 = time.time()
+    print('Subsampling with color done in {:.3f} seconds'.format(t1 - t0))
+
+    # Save
+    write_ply('../grid_subsampled_color.ply', [subsampled_points, subsampled_colors], ['x', 'y', 'z', 'red', 'green', 'blue'])
+    
+    # Subsample with labels
+    t0 = time.time()
+    subsampled_points, subsampled_colors, subsampled_labels = grid_subsampling_labels(points, colors, labels, voxel_size)
+    t1 = time.time()
+    print('Subsampling with labels done in {:.3f} seconds'.format(t1 - t0))
+
+    # Save
+    write_ply('../grid_subsampled_labels.ply', [subsampled_points, subsampled_colors, subsampled_labels], ['x', 'y', 'z', 'red', 'green', 'blue', 'label'])
     
     print('Done')
