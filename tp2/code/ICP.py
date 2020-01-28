@@ -50,7 +50,6 @@ def RMS(data, ref):
     delta_sq = np.sum(delta**2, axis=0)
     return np.mean(delta_sq)**0.5
 
-
 def best_rigid_transform(data, ref):
     '''
     Computes the least-squares best-fit transform that maps corresponding points data to ref.
@@ -62,20 +61,21 @@ def best_rigid_transform(data, ref):
            T = (d x 1) translation vector
            Such that R * data + T is aligned on ref
     '''
-    bar_ref = ref.mean(axis=1, keepdims=True)
     bar_data = data.mean(axis=1, keepdims=True)
+    bar_ref = ref.mean(axis=1, keepdims=True)
+    
+    Qdata = data - bar_data
+    Qref = ref - bar_ref
+    
+    H = Qdata @ Qref.T
 
-    Qr = ref - bar_ref
-    Qd = data - bar_data
+    U, _, V = np.linalg.svd(H)
 
-    H = Qd @ Qr.T
-    U, S, V = np.linalg.svd(H)
-
-    R = V @ U.T
+    R = V.T @ U.T
     if np.linalg.det(R) < 0:
         U[:,2] *= -1
-        R = V @ U.T
-    R = R
+        R = V.T @ U.T
+
     T = bar_ref - R @ bar_data
 
     return R, T
