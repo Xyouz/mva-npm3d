@@ -45,6 +45,11 @@ from utils.visu import show_ICP
 #   Here you can define usefull functions to be used in the main
 #
 
+def RMS(data, ref):
+    delta = ref - data
+    delta_sq = np.sum(delta**2, axis=0)
+    return np.mean(delta_sq)**0.5
+
 
 def best_rigid_transform(data, ref):
     '''
@@ -149,11 +154,11 @@ if __name__ == '__main__':
         write_ply('../bunny_recaled.ply', [transformed_points.T], ['x', 'y', 'z'])
 
         # Compute RMS
-        delta = points_o - transformed_points
-        RMS = np.sum(delta**2)
-
+        RMS1 = RMS(points_r, points_o)
+        RMS2 = RMS(transformed_points, points_o)
         # Print RMS
-        print("RMS :", RMS)
+        print("RMS initiale:", RMS1)
+        print("RMS après recalage:",RMS2)
    
 
     # Test ICP and visualize
