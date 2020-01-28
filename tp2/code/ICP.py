@@ -107,7 +107,10 @@ def icp_point_to_point(data, ref, max_iter, RMS_threshold):
     T_list = []
     neighbors_list = []
 
-    # YOUR CODE
+    kdtree = KDTree(ref.T)
+
+    for i in range(max_iter):
+        pass
 
     return data_aligned, R_list, T_list, neighbors_list
 
