@@ -59,8 +59,22 @@ def best_rigid_transform(data, ref):
     '''
 
     # YOUR CODE
-    R = np.eye(data.shape[0])
-    T = np.zeros(data.shape[0])
+    bar_ref = ref.mean(axis=1, keepdims=True)
+    bar_data = data.mean(axis=1, keepdims=True)
+
+    Qr = ref - bar_ref
+    Qd = data - bar_data
+
+    H = Qd @ Qr.T
+    U, S, V = np.linalg.svd(H)
+
+    R = V @ U.T
+    if np.linalg.det(R) < 0:
+        print("pouf")
+        U[:,2] *= -1
+        R = V @ U.T
+    R = R
+    T = bar_ref - R @ bar_data
 
     return R, T
 
@@ -113,23 +127,33 @@ if __name__ == '__main__':
     #
 
     # If statement to skip this part if wanted
-    if False:
+    if True:
 
         # Cloud paths
         bunny_o_path = '../data/bunny_original.ply'
         bunny_r_path = '../data/bunny_returned.ply'
 
-        # Load clouds
+        # Load point cloud
+        data_o = read_ply(bunny_o_path)
+        points_o = np.vstack((data_o['x'], data_o['y'], data_o['z']))
+        data_r = read_ply(bunny_r_path)
+        points_r = np.vstack((data_r['x'], data_r['y'], data_r['z']))
 
         # Find the best transformation
+        R, T = best_rigid_transform(points_r, points_o)
 
         # Apply the tranformation
+        transformed_points = R @ points_r + T
 
         # Save cloud
+        write_ply('../bunny_recaled.ply', [transformed_points.T], ['x', 'y', 'z'])
 
         # Compute RMS
+        delta = points_o - transformed_points
+        RMS = np.sum(delta**2)
 
         # Print RMS
+        print("RMS :", RMS)
    
 
     # Test ICP and visualize
