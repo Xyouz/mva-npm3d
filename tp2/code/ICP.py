@@ -62,8 +62,6 @@ def best_rigid_transform(data, ref):
            T = (d x 1) translation vector
            Such that R * data + T is aligned on ref
     '''
-
-    # YOUR CODE
     bar_ref = ref.mean(axis=1, keepdims=True)
     bar_data = data.mean(axis=1, keepdims=True)
 
@@ -75,7 +73,6 @@ def best_rigid_transform(data, ref):
 
     R = V @ U.T
     if np.linalg.det(R) < 0:
-        print("pouf")
         U[:,2] *= -1
         R = V @ U.T
     R = R
