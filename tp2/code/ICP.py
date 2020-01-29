@@ -103,16 +103,37 @@ def icp_point_to_point(data, ref, max_iter, RMS_threshold):
     data_aligned = np.copy(data)
 
     # Initiate lists
-    R_list = []
-    T_list = []
+    d, n = data.shape
+    R_list = [np.eye(d)]
+    T_list = [np.zeros((d,1))]
     neighbors_list = []
+    RMS_list = []
 
     kdtree = KDTree(ref.T)
-
     for i in range(max_iter):
-        pass
+        _, neighbors = kdtree.query(data_aligned.T, k=1)
+        neighbors = neighbors.squeeze()
+        R, T = best_rigid_transform(data_aligned, ref[:,neighbors])
 
-    return data_aligned, R_list, T_list, neighbors_list
+        plt.scatter(ref[0],ref[1],marker='.')
+        plt.scatter(ref[:,neighbors][0],ref[:,neighbors][1],marker='.')
+        plt.scatter(data[0],data[1],marker='.')
+        plt.show()
+
+        T = R @ T_list[-1] + T
+        R = R @ R_list[-1]
+        
+        T_list.append(T)
+        R_list.append(R)
+        neighbors_list.append(neighbors)
+
+        data_aligned = R @ data + T
+        
+        rms = RMS(data_aligned, ref[:,neighbors].squeeze())
+        RMS_list.append(rms)
+        if rms < RMS_threshold:
+            return data_aligned, R_list[1:], T_list[1:], neighbors_list, RMS_list
+    return data_aligned, R_list[1:], T_list[1:], neighbors_list, RMS_list
 
 
 #------------------------------------------------------------------------------------------
@@ -132,7 +153,7 @@ if __name__ == '__main__':
     #
 
     # If statement to skip this part if wanted
-    if True:
+    if False:
 
         # Cloud paths
         bunny_o_path = '../data/bunny_original.ply'
@@ -166,17 +187,37 @@ if __name__ == '__main__':
     #
 
     # If statement to skip this part if wanted
-    if False:
+    if True:
 
         # Cloud paths
         ref2D_path = '../data/ref2D.ply'
         data2D_path = '../data/data2D.ply'
 
         # Load clouds
+        ref = read_ply(ref2D_path)
+        ref = np.vstack((ref['x'], ref['y']))
+        data = read_ply(data2D_path)
+        data = np.vstack((data['x'], data['y']))
+
+        # Cloud paths
+        bunny_o_path = '../data/bunny_original.ply'
+        bunny_r_path = '../data/bunny_returned.ply'
+
+        # Load point cloud
+        # ref = read_ply(bunny_o_path)
+        # ref = np.vstack((ref['x'], ref['y'], ref['z']))
+        # data = read_ply(bunny_r_path)
+        # data = np.vstack((data['x'], data['y'], data['z']))
 
         # Apply ICP
+        data_aligned, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(data, ref, 100, 1e-6)
 
         # Show ICP
+        plt.semilogy(RMS_list)
+        plt.title("Evolution of the RMS between data and matched points of ref")
+        plt.show()
+
+        show_ICP(data, ref, R_list, T_list, neighbors_list)
 
     # If statement to skip this part if wanted
     if False:
