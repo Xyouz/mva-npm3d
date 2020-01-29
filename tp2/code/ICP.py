@@ -131,7 +131,7 @@ def icp_point_to_point(data, ref, max_iter, RMS_threshold):
     return data_aligned, R_list[1:], T_list[1:], neighbors_list, RMS_list
 
 
-def icp_point_to_point_stochastic(data, ref, max_iter, RMS_threshold, sampling_limit):
+def icp_point_to_point_stochastic(data, ref, max_iter, RMS_threshold, sampling_limit, final_overlap=1.):
     '''
     Iterative closest point algorithm with a point to point strategy.
     Inputs :
@@ -139,6 +139,8 @@ def icp_point_to_point_stochastic(data, ref, max_iter, RMS_threshold, sampling_l
         ref = (d x N_ref) matrix where "N_ref" is the number of points and "d" the dimension
         max_iter = stop condition on the number of iterations
         RMS_threshold = stop condition on the distance
+        sampling_limit = maximum number of points to use to compute transformations
+        final_overlap = overlap parameter
     Returns :
         data_aligned = data aligned on reference cloud
         R_list = list of the (d x d) rotation matrices found at each iteration
@@ -162,14 +164,20 @@ def icp_point_to_point_stochastic(data, ref, max_iter, RMS_threshold, sampling_l
     kdtree = KDTree(ref.T)
 
     n_samples = min(n, sampling_limit)
+    n_overlap = int(final_overlap * n_samples)
 
     for i in range(max_iter):
         # Sampling points
         data_idx = np.random.choice(n, n_samples, replace=False)
 
         # Matching points
-        _, neighbors = kdtree.query(data_aligned[:,data_idx].T, k=1)
+        dist, neighbors = kdtree.query(data_aligned[:,data_idx].T, k=1)
         neighbors = neighbors.squeeze()
+        if n_overlap != n_samples:
+            dist = dist.squeeze()
+            best_neighbors = np.argpartition(dist, n_overlap)[:n_overlap]
+            neighbors = neighbors[best_neighbors]
+            data_idx = data_idx[best_neighbors]
 
         # Estimating the best transform
         R, T = best_rigid_transform(data_aligned[:,data_idx], ref[:,neighbors])
@@ -258,7 +266,7 @@ if __name__ == '__main__':
         data = np.vstack((data['x'], data['y']))
 
         # Apply ICP
-        data_aligned, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(data, ref, 100, 1e-6)
+        data_aligned, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(data, ref, 50, 1e-1)
 
         # Show ICP
         plt.semilogy(RMS_list)
@@ -282,14 +290,12 @@ if __name__ == '__main__':
         data = np.vstack((data['x'], data['y'], data['z']))
 
         # Apply ICP
-        data_aligned, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(data, ref, 100, 1e-6)
+        data_aligned, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(data, ref, 50, 1e-1)
 
         # Show ICP
         plt.semilogy(RMS_list)
         plt.title("Evolution of the RMS between data and matched points of ref")
         plt.show()
-
-        show_ICP(data, ref, R_list, T_list, neighbors_list)
 
 
     # Fast ICP
@@ -315,7 +321,7 @@ if __name__ == '__main__':
         sampling_limit = [1000, 10000, 50000]
         for sl in sampling_limit:
             print("Number of sampling points {} ...".format(sl), end="")
-            _,_,_,_, RMS_l = icp_point_to_point_stochastic(data, ref, 100, 1e-6,sl)
+            _,_,_,_, RMS_l = icp_point_to_point_stochastic(data, ref, 50, 1e-2, sl, final_overlap=0.3)
             RMS_list.append(RMS_l)
             print(" Done.")
 
