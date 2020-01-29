@@ -321,11 +321,13 @@ if __name__ == '__main__':
         sampling_limit = [1000, 10000, 50000]
         for sl in sampling_limit:
             print("Number of sampling points {} ...".format(sl), end="")
-            _,_,_,_, RMS_l = icp_point_to_point_stochastic(data, ref, 50, 1e-2, sl, final_overlap=0.3)
+            
+            data_aligned,_,_,_, RMS_l = icp_point_to_point_stochastic(data, ref, 100, 1e-2, sl, final_overlap=0.2)
             RMS_list.append(RMS_l)
             print(" Done.")
 
-        # Show ICP
+        # Plot RMS
+        
         for sl, rms in zip(sampling_limit, RMS_list):
             plt.plot(rms, label="{} samples".format(sl))
         plt.title("Evolution of the RMS between data and matched points of ref")
@@ -333,8 +335,4 @@ if __name__ == '__main__':
         plt.show()
 
 
-
-        # Plot RMS
-        #
-        # => To plot something in python use the function plt.plot() to create the figure and 
-        #    then plt.show() to display it
+        write_ply('../NDDC_icp.ply', [data_aligned.T], ['x', 'y', 'z'])
