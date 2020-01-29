@@ -131,6 +131,69 @@ def icp_point_to_point(data, ref, max_iter, RMS_threshold):
     return data_aligned, R_list[1:], T_list[1:], neighbors_list, RMS_list
 
 
+def icp_point_to_point_stochastic(data, ref, max_iter, RMS_threshold, sampling_limit):
+    '''
+    Iterative closest point algorithm with a point to point strategy.
+    Inputs :
+        data = (d x N_data) matrix where "N_data" is the number of points and "d" the dimension
+        ref = (d x N_ref) matrix where "N_ref" is the number of points and "d" the dimension
+        max_iter = stop condition on the number of iterations
+        RMS_threshold = stop condition on the distance
+    Returns :
+        data_aligned = data aligned on reference cloud
+        R_list = list of the (d x d) rotation matrices found at each iteration
+        T_list = list of the (d x 1) translation vectors found at each iteration
+        neighbors_list = At each iteration, you search the nearest neighbors of each data point in
+        the ref cloud and this obtain a (1 x N_data) array of indices. This is the list of those
+        arrays at each iteration
+           
+    '''
+
+    # Variable for aligned data
+    data_aligned = np.copy(data)
+
+    # Initiate lists
+    d, n = data.shape
+    R_list = [np.eye(d)]
+    T_list = [np.zeros((d,1))]
+    neighbors_list = []
+    RMS_list = []
+
+    kdtree = KDTree(ref.T)
+
+    n_samples = min(n, sampling_limit)
+
+    for i in range(max_iter):
+        # Sampling points
+        data_idx = np.random.choice(n, n_samples, replace=False)
+
+        # Matching points
+        _, neighbors = kdtree.query(data_aligned[:,data_idx].T, k=1)
+        neighbors = neighbors.squeeze()
+
+        # Estimating the best transform
+        R, T = best_rigid_transform(data_aligned[:,data_idx], ref[:,neighbors])
+
+        # Computing the full transform
+        T = R @ T_list[-1] + T
+        R = R @ R_list[-1]
+        
+        # Store everything
+        T_list.append(T)
+        R_list.append(R)
+        neighbors_list.append(neighbors)
+
+        # Aligne the data
+        data_aligned = R @ data + T
+        
+        # Check the RMS threshold
+        rms = RMS(data_aligned[:,data_idx], ref[:,neighbors].squeeze())
+        RMS_list.append(rms)
+        if rms < RMS_threshold:
+            return data_aligned, R_list[1:], T_list[1:], neighbors_list, RMS_list
+    return data_aligned, R_list[1:], T_list[1:], neighbors_list, RMS_list
+
+
 #------------------------------------------------------------------------------------------
 #
 #           Main
@@ -182,7 +245,7 @@ if __name__ == '__main__':
     #
 
     # If statement to skip this part if wanted
-    if True:
+    if False:
 
         # Cloud paths
         ref2D_path = '../data/ref2D.ply'
@@ -194,9 +257,23 @@ if __name__ == '__main__':
         data = read_ply(data2D_path)
         data = np.vstack((data['x'], data['y']))
 
+        # Apply ICP
+        data_aligned, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(data, ref, 100, 1e-6)
+
+        # Show ICP
+        plt.semilogy(RMS_list)
+        plt.title("Evolution of the RMS between data and matched points of ref")
+        plt.show()
+
+        show_ICP(data, ref, R_list, T_list, neighbors_list)
+        
+
+    # If statement to skip this part if wanted
+    if False:
+
         # Cloud paths
         bunny_o_path = '../data/bunny_original.ply'
-        bunny_r_path = '../data/bunny_perturbed.ply'
+        bunny_p_path = '../data/bunny_perturbed.ply'
 
         # Load point cloud
         ref = read_ply(bunny_o_path)
@@ -214,34 +291,42 @@ if __name__ == '__main__':
 
         show_ICP(data, ref, R_list, T_list, neighbors_list)
 
-    # If statement to skip this part if wanted
-    if False:
-
-        # Cloud paths
-        bunny_o_path = '../data/bunny_original.ply'
-        bunny_p_path = '../data/bunny_perturbed.ply'
-
-        # Load clouds
-
-        # Apply ICP
-
-        # Show ICP
-
 
     # Fast ICP
     # ********
     #
 
     # If statement to skip this part if wanted
-    if False:
+    if True:
 
         # Cloud paths
         NDDC_1_path = '../data/Notre_Dame_Des_Champs_1.ply'
         NDDC_2_path = '../data/Notre_Dame_Des_Champs_2.ply'
 
-        # Load clouds
+
+        # Load point cloud
+        ref = read_ply(NDDC_1_path)
+        ref = np.vstack((ref['x'], ref['y'], ref['z']))
+        data = read_ply(NDDC_2_path)
+        data = np.vstack((data['x'], data['y'], data['z']))
 
         # Apply fast ICP for different values of the sampling_limit parameter
+        RMS_list = []
+        sampling_limit = [1000, 10000, 50000]
+        for sl in sampling_limit:
+            print("Number of sampling points {} ...".format(sl), end="")
+            _,_,_,_, RMS_l = icp_point_to_point_stochastic(data, ref, 100, 1e-6,sl)
+            RMS_list.append(RMS_l)
+            print(" Done.")
+
+        # Show ICP
+        for sl, rms in zip(sampling_limit, RMS_list):
+            plt.plot(rms, label="{} samples".format(sl))
+        plt.title("Evolution of the RMS between data and matched points of ref")
+        plt.legend()
+        plt.show()
+
+
 
         # Plot RMS
         #
