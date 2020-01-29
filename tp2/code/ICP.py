@@ -115,11 +115,6 @@ def icp_point_to_point(data, ref, max_iter, RMS_threshold):
         neighbors = neighbors.squeeze()
         R, T = best_rigid_transform(data_aligned, ref[:,neighbors])
 
-        plt.scatter(ref[0],ref[1],marker='.')
-        plt.scatter(ref[:,neighbors][0],ref[:,neighbors][1],marker='.')
-        plt.scatter(data[0],data[1],marker='.')
-        plt.show()
-
         T = R @ T_list[-1] + T
         R = R @ R_list[-1]
         
@@ -201,13 +196,13 @@ if __name__ == '__main__':
 
         # Cloud paths
         bunny_o_path = '../data/bunny_original.ply'
-        bunny_r_path = '../data/bunny_returned.ply'
+        bunny_r_path = '../data/bunny_perturbed.ply'
 
         # Load point cloud
-        # ref = read_ply(bunny_o_path)
-        # ref = np.vstack((ref['x'], ref['y'], ref['z']))
-        # data = read_ply(bunny_r_path)
-        # data = np.vstack((data['x'], data['y'], data['z']))
+        ref = read_ply(bunny_o_path)
+        ref = np.vstack((ref['x'], ref['y'], ref['z']))
+        data = read_ply(bunny_r_path)
+        data = np.vstack((data['x'], data['y'], data['z']))
 
         # Apply ICP
         data_aligned, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(data, ref, 100, 1e-6)
