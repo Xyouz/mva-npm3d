@@ -253,7 +253,7 @@ if __name__ == '__main__':
     #
 
     # If statement to skip this part if wanted
-    if False:
+    if True:
 
         # Cloud paths
         ref2D_path = '../data/ref2D.ply'
@@ -269,7 +269,7 @@ if __name__ == '__main__':
         data_aligned, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(data, ref, 50, 1e-1)
 
         # Show ICP
-        plt.semilogy(RMS_list)
+        plt.plot(RMS_list)
         plt.title("Evolution of the RMS between data and matched points of ref")
         plt.show()
 
@@ -277,11 +277,11 @@ if __name__ == '__main__':
         
 
     # If statement to skip this part if wanted
-    if False:
+    if True:
 
         # Cloud paths
         bunny_o_path = '../data/bunny_original.ply'
-        bunny_p_path = '../data/bunny_perturbed.ply'
+        bunny_r_path = '../data/bunny_perturbed.ply'
 
         # Load point cloud
         ref = read_ply(bunny_o_path)
@@ -293,7 +293,7 @@ if __name__ == '__main__':
         data_aligned, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(data, ref, 50, 1e-1)
 
         # Show ICP
-        plt.semilogy(RMS_list)
+        plt.plot(RMS_list)
         plt.title("Evolution of the RMS between data and matched points of ref")
         plt.show()
 
@@ -303,7 +303,7 @@ if __name__ == '__main__':
     #
 
     # If statement to skip this part if wanted
-    if True:
+    if False:
 
         # Cloud paths
         NDDC_1_path = '../data/Notre_Dame_Des_Champs_1.ply'
