@@ -85,7 +85,7 @@ def show_ICP(data, ref, R_list, T_list, neighbors_list):
         if dim == 3:
             ax.plot(ref[0], ref[1], ref[2], '.')
             ax.plot(data_aligned[0], data_aligned[1], data_aligned[2], '.')
-            plt.axis('equal')
+            # plt.axis('equal')
         if show_neighbors and iteration < max_iter:
             ax.set_title('Iteration {:d} ===> press right / left to change\nNeighbors ON ===> Press n to change (only in 2D)'.format(iteration))
         else:
