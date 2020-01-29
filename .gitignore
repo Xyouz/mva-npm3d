@@ -4,6 +4,7 @@
 # Tex files
 *.aux
 *.log
+*.synctex.gz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
