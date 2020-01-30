@@ -49,8 +49,12 @@ import time
 
 def local_PCA(points):
 
-    eigenvalues = None
-    eigenvectors = None
+    bar = points.mean(axis=0)
+
+    centered = (points - bar)[:,:,np.newaxis]
+    cov = (np.matmul(centered, centered.transpose(0,2,1))).mean(axis=0)
+
+    eigenvalues, eigenvectors = np.linalg.eigh(cov)
 
     return eigenvalues, eigenvectors
 
@@ -58,9 +62,18 @@ def local_PCA(points):
 def neighborhood_PCA(query_points, cloud_points, radius):
 
     # This function needs to compute PCA on the neighborhoods of all query_points in cloud_points
+    
+    kdtree = KDTree(cloud_points)
+
+    neighborhoods = kdtree.query_radius(query_points, radius)
 
     all_eigenvalues = np.zeros((query_points.shape[0], 3))
     all_eigenvectors = np.zeros((query_points.shape[0], 3, 3))
+
+    for i, ind in enumerate(neighborhoods):
+        val, vec = local_PCA(cloud_points[ind,:])
+        all_eigenvalues[i] = val
+        all_eigenvectors[i] = vec
 
     return all_eigenvalues, all_eigenvectors
 
@@ -116,14 +129,21 @@ if __name__ == '__main__':
     # ******************
     #
 
-    if False:
+    if True:
 
         # Load cloud as a [N x 3] matrix
         cloud_path = '../data/Lille_street_small.ply'
         cloud_ply = read_ply(cloud_path)
         cloud = np.vstack((cloud_ply['x'], cloud_ply['y'], cloud_ply['z'])).T
 
-        # YOUR CODE
+        query = cloud
+
+        val, vec = neighborhood_PCA(query, cloud, 0.5)
+
+        normal = vec[:,:,0]
+
+        write_ply('../Lille_small_normal.ply', [query, normal], ['x', 'y', 'z', 'nx', 'ny', 'nz'])
+
 
     # Features computation
     # ********************
