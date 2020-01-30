@@ -78,6 +78,10 @@ The RMS plot for ICP and different number of matched points can be seen in Figur
 \paragraph{Question 5.}
 The farthest points do not have a match on the other  cloud, they are on parts of buildings that were not present in the first scan. They are likely to hinder ICP convergence as the algorithm will try find a transformation that maps them to some points in the reference cloud. For the same reason RMS computed on the whole cloud is not really relevant as we expect the distance of some points to the other cloud to remain high.
 
+\paragraph{Question bonus 1.}
+The results obtained with my implementation of ICP are really similar to those of CloudCompare without using the \texttt{final\_overlap}. They are good but there is a rotation to the reference that remains. Using \texttt{final\_overlap} (set to $20\%$) CloudCompare yields better results that are really close to the reference cloud.
 
+\paragraph{Question bonus 2.}
+I obtained my best results using a \texttt{final\_overlap} of $10\%$ but I was not able to beat CloudCompare results.
 
 \end{document}
