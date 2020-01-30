@@ -129,7 +129,7 @@ if __name__ == '__main__':
     # ******************
     #
 
-    if True:
+    if False:
 
         # Load cloud as a [N x 3] matrix
         cloud_path = '../data/Lille_street_small.ply'
@@ -142,7 +142,8 @@ if __name__ == '__main__':
 
         normal = vec[:,:,0]
 
-        write_ply('../Lille_small_normal.ply', [query, normal], ['x', 'y', 'z', 'nx', 'ny', 'nz'])
+        # We also save the value of lambda_min
+        write_ply('../Lille_small_normal.ply', [query, normal, val[:,0]], ['x', 'y', 'z', 'nx', 'ny', 'nz', 'label'])
 
 
     # Features computation
