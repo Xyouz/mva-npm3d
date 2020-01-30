@@ -253,7 +253,7 @@ if __name__ == '__main__':
     #
 
     # If statement to skip this part if wanted
-    if True:
+    if False:
 
         # Cloud paths
         ref2D_path = '../data/ref2D.ply'
@@ -290,12 +290,14 @@ if __name__ == '__main__':
         data = np.vstack((data['x'], data['y'], data['z']))
 
         # Apply ICP
-        data_aligned, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(data, ref, 50, 1e-1)
+        data_aligned, R_list, T_list, neighbors_list, RMS_list = icp_point_to_point(data, ref, 50, 1e-7)
 
         # Show ICP
         plt.plot(RMS_list)
         plt.title("Evolution of the RMS between data and matched points of ref")
         plt.show()
+
+        # show_ICP(data, ref, R_list, T_list, neighbors_list)
 
 
     # Fast ICP
