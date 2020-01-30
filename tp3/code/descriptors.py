@@ -83,6 +83,8 @@ def compute_features(query_points, cloud_points, radius):
     # Compute the features for all query points in the cloud
     val, vec = neighborhood_PCA(query_points, cloud_points, radius)
 
+    val[:,2] += 1e-10
+    
     linearity = 1 - val[:,1]/val[:,2]
     planarity = (val[:,1] - val[:,0]) / val[:,2]
     sphericity = val[:,0] / val[:,2]
