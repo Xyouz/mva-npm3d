@@ -48,4 +48,21 @@ ICP performs well for the bunny only when it is only perturbed, not returned (se
 
 \paragraph{Question 2.} The RMS between the returned cloud and the reference one was $0.16$. The RMS between the aligned cloud and the reference one was $1.32\times 10^{-8}$. This method worked better than CloudCompare ICP because it uses the fact that the order of the points is the same in both model : this is a strong assumption. For instance it would not work for the Notre Dame clouds as they do not even have the same number of points.
 
+\paragraph{Question 3.}
+The graph for RMS convergence during ICP are shown in Figure \ref{fig:q3-2d} and \ref{fig:q3-3d}.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.5\linewidth]{q3-2D.jpg}
+	\caption{Evolution of the RMS for every step of ICP when applied to the 2D example.}
+	\label{fig:q3-2d}
+\end{figure}
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.5\linewidth]{q3-3D.jpg}
+	\caption{Evolution of the RMS for every step of ICP when applied to the perturbed bunny cloud. The RMS goes down to around $1.4\times  10^{-7}$ and then stop decreasing, likely due to rounding errors.
+	\label{fig:q3-3d}
+\end{figure}
+
 \end{document}
