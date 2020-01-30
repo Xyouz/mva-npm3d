@@ -81,11 +81,17 @@ def neighborhood_PCA(query_points, cloud_points, radius):
 def compute_features(query_points, cloud_points, radius):
 
     # Compute the features for all query points in the cloud
+    val, vec = neighborhood_PCA(query_points, cloud_points, radius)
 
-    verticality = np.zeros((query_points.shape[0]))
-    linearity = np.zeros((query_points.shape[0]))
-    planarity = np.zeros((query_points.shape[0]))
-    sphericity = np.zeros((query_points.shape[0]))
+    linearity = 1 - val[:,1]/val[:,2]
+    planarity = (val[:,1] - val[:,0]) / val[:,2]
+    sphericity = val[:,0] / val[:,2]
+
+    ez = np.zeros((3,1))
+    ez[2,0] = 1.
+
+    normal = vec[:,:,0]
+    verticality = 2 * np.arcsin(np.abs(normal@ez)) / np.pi
 
     return verticality, linearity, planarity, sphericity
 
@@ -150,11 +156,15 @@ if __name__ == '__main__':
     # ********************
     #
 
-    if False:
+    if True:
 
         # Load cloud as a [N x 3] matrix
         cloud_path = '../data/Lille_street_small.ply'
         cloud_ply = read_ply(cloud_path)
         cloud = np.vstack((cloud_ply['x'], cloud_ply['y'], cloud_ply['z'])).T
 
-        # YOUR CODE
+        query = cloud#[::1000]
+
+        vert, lin, plan, spher = compute_features(query, cloud, 0.5)
+                
+        write_ply('../Lille_small_feat.ply', [query, vert, lin, plan, spher], ['x', 'y', 'z', 'vert', 'lin', 'plan', 'spher'])
