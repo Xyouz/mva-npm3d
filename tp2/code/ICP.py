@@ -277,7 +277,7 @@ if __name__ == '__main__':
         
 
     # If statement to skip this part if wanted
-    if True:
+    if False:
 
         # Cloud paths
         bunny_o_path = '../data/bunny_original.ply'
@@ -305,7 +305,7 @@ if __name__ == '__main__':
     #
 
     # If statement to skip this part if wanted
-    if False:
+    if True:
 
         # Cloud paths
         NDDC_1_path = '../data/Notre_Dame_Des_Champs_1.ply'
@@ -324,7 +324,7 @@ if __name__ == '__main__':
         for sl in sampling_limit:
             print("Number of sampling points {} ...".format(sl), end="")
             
-            data_aligned,_,_,_, RMS_l = icp_point_to_point_stochastic(data, ref, 100, 1e-2, sl, final_overlap=0.2)
+            data_aligned,_,_,_, RMS_l = icp_point_to_point_stochastic(data, ref, 100, 1e-2, sl, final_overlap=1)
             RMS_list.append(RMS_l)
             print(" Done.")
 
