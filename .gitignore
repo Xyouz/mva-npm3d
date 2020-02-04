@@ -1,5 +1,7 @@
 # Point cloud
 *.ply
+*.npy
+MiniDijon9.txt
 
 # Tex files
 *.aux
