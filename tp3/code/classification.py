@@ -39,6 +39,8 @@ import time
 from os import listdir
 from os.path import exists, join
 
+from tqdm import tqdm
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 #
@@ -98,7 +100,7 @@ class FeaturesExtractor:
 
         # Loop over each training cloud
         for i, file in enumerate(ply_files):
-
+            print("File {}: {}".format(i, file))
             # Load Training cloud
             cloud_ply = read_ply(join(path, file))
             points = np.vstack((cloud_ply['x'], cloud_ply['y'], cloud_ply['z'])).T
@@ -108,7 +110,7 @@ class FeaturesExtractor:
             training_inds = np.empty(0, dtype=np.int32)
 
             # Loop over each class to choose training points
-            for label, name in self.label_names.items():
+            for label, name in tqdm(self.label_names.items()):
 
                 # Do not include class 0 in training
                 if label == 0:
@@ -154,6 +156,7 @@ class FeaturesExtractor:
 
         # Loop over each training cloud
         for i, file in enumerate(ply_files):
+            print("File {}: {}".format(i, file))
 
             # Load Training cloud
             cloud_ply = read_ply(join(path, file))
@@ -166,7 +169,7 @@ class FeaturesExtractor:
             #
 
             # Name the feature file after the ply file.
-            feature_file = ply_files[:-4] + '_features.npy'
+            feature_file = file[:-4] + '_features.npy'
             feature_file = join(path, feature_file)
 
             # If the file exists load the previously computed features
