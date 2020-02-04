@@ -137,7 +137,7 @@ if __name__ == '__main__':
     # ******************
     #
 
-    if False:
+    if True:
 
         # Load cloud as a [N x 3] matrix
         cloud_path = '../data/Lille_street_small.ply'
@@ -150,6 +150,10 @@ if __name__ == '__main__':
 
         normal = vec[:,:,0]
 
+        # Naive alignement method
+        rectifier = np.sign((normal*[1,0.2,1]).sum(axis=1, keepdims=True))
+        normal = normal * rectifier
+
         # We also save the value of lambda_min
         write_ply('../Lille_small_normal.ply', [query, normal, val[:,0]], ['x', 'y', 'z', 'nx', 'ny', 'nz', 'label'])
 
@@ -158,7 +162,7 @@ if __name__ == '__main__':
     # ********************
     #
 
-    if True:
+    if False:
 
         # Load cloud as a [N x 3] matrix
         cloud_path = '../data/Lille_street_small.ply'
