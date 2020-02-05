@@ -153,7 +153,7 @@ class FeaturesExtractor:
         ply_files = [f for f in listdir(path) if f.endswith('.ply')]
 
         # Initiate arrays
-        test_features = np.empty((0, 4))
+        test_features = np.empty((0, 9))
 
         # Loop over each training cloud
         for i, file in enumerate(ply_files):
