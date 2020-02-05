@@ -69,7 +69,7 @@ class FeaturesExtractor:
         self.radius = 0.5
 
         # Number of training points per class
-        self.num_per_class = 500
+        self.num_per_class = 10000
 
         # Classification labels
         self.label_names = {0: 'Unclassified',
@@ -95,7 +95,7 @@ class FeaturesExtractor:
         ply_files = [f for f in listdir(path) if f.endswith('.ply')]
 
         # Initiate arrays
-        training_features = np.empty((0, 4))
+        training_features = np.empty((0, 9))
         training_labels = np.empty((0,))
 
         # Loop over each training cloud
@@ -135,7 +135,7 @@ class FeaturesExtractor:
             feats = compute_features(training_points, points, self.radius, True)
             feats = [feat.ravel() for feat in feats]
             features = np.vstack(feats).T
-
+            
             # Concatenate features / labels of all clouds
             training_features = np.vstack((training_features, features))
             training_labels = np.hstack((training_labels, labels[training_inds]))
