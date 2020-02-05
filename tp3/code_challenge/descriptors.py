@@ -37,6 +37,7 @@ from utils.ply import write_ply, read_ply
 # Import time package
 import time
 
+import tqdm
 
 # ------------------------------------------------------------------------------------------
 #
@@ -59,7 +60,7 @@ def local_PCA(points):
     return eigenvalues, eigenvectors
 
 
-def neighborhood_PCA(query_points, cloud_points, radius):
+def neighborhood_PCA(query_points, cloud_points, radius, use_tqdm=False):
 
     # This function needs to compute PCA on the neighborhoods of all query_points in cloud_points
     
@@ -70,7 +71,12 @@ def neighborhood_PCA(query_points, cloud_points, radius):
     all_eigenvalues = np.zeros((query_points.shape[0], 3))
     all_eigenvectors = np.zeros((query_points.shape[0], 3, 3))
 
-    for i, ind in enumerate(neighborhoods):
+    if use_tqdm:
+        tqdm = tqdm.tqdm
+    else :
+        tqdm = lambda x:x
+
+    for i, ind in tqdm(enumerate(neighborhoods)):
         val, vec = local_PCA(cloud_points[ind,:])
         all_eigenvalues[i] = val
         all_eigenvectors[i] = vec
@@ -78,24 +84,33 @@ def neighborhood_PCA(query_points, cloud_points, radius):
     return all_eigenvalues, all_eigenvectors
 
 
-def compute_features(query_points, cloud_points, radius):
+def compute_features(query_points, cloud_points, radius, use_tqdm=False):
 
     # Compute the features for all query points in the cloud
-    val, vec = neighborhood_PCA(query_points, cloud_points, radius)
+    val, vec = neighborhood_PCA(query_points, cloud_points, radius, use_tqdm)
 
     val[:,2] += 1e-10
     
-    linearity = 1 - val[:,1]/val[:,2]
-    planarity = (val[:,1] - val[:,0]) / val[:,2]
-    sphericity = val[:,0] / val[:,2]
+    e1 = val[:,2]
+    e2 = val[:,1]
+    e3 = val[:,0]
+    
+    L = 1 - e2/e1
+    P = (e2 - e3) / e1
+    S = e3 / e1
+    O = (e1*e2*e3)**(1/3)
+    A = 1 - e3/e1
+    E = - np.sum(val * np.log(val), axis=1)
+    Sigma = val.sum(axis=1)
+    C = e3 / Sigma
 
     ez = np.zeros((3,1))
     ez[2,0] = 1.
 
     normal = vec[:,:,0]
-    verticality = 2 * np.arcsin(np.abs(normal@ez)) / np.pi
+    V = 2 * np.arcsin(np.abs(normal@ez)) / np.pi
 
-    return verticality, linearity, planarity, sphericity
+    return V, L, P, S, O, A, E, Sigma, C
 
 
 # ------------------------------------------------------------------------------------------
@@ -137,7 +152,7 @@ if __name__ == '__main__':
     # ******************
     #
 
-    if True:
+    if False:
 
         # Load cloud as a [N x 3] matrix
         cloud_path = '../data/Lille_street_small.ply'

@@ -110,7 +110,7 @@ class FeaturesExtractor:
             training_inds = np.empty(0, dtype=np.int32)
 
             # Loop over each class to choose training points
-            for label, name in tqdm(self.label_names.items()):
+            for label, name in self.label_names.items():
 
                 # Do not include class 0 in training
                 if label == 0:
@@ -132,8 +132,9 @@ class FeaturesExtractor:
             training_points = points[training_inds, :]
 
             # Compute features for the points of the chosen indices and place them in a [N, 4] matrix
-            vert, line, plan, sphe = compute_features(training_points, points, self.radius)
-            features = np.vstack((vert.ravel(), line.ravel(), plan.ravel(), sphe.ravel())).T
+            feats = compute_features(training_points, points, self.radius, True)
+            feats = [feat.ravel() for feat in feats]
+            features = np.vstack(feats).T
 
             # Concatenate features / labels of all clouds
             training_features = np.vstack((training_features, features))
@@ -179,8 +180,9 @@ class FeaturesExtractor:
             # If the file does not exist, compute the features (very long) and save them for future use
             else:
 
-                vert, line, plan, sphe = compute_features(points, points, self.radius)
-                features = np.vstack((vert.ravel(), line.ravel(), plan.ravel(), sphe.ravel())).T
+                feats = compute_features(points, points, self.radius, True)
+                feats = [feat.ravel() for feat in feats]
+                features = np.vstack(feats).T
                 np.save(feature_file, features)
 
             # Concatenate features of several clouds
