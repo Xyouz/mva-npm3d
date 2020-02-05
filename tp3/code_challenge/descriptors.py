@@ -67,10 +67,10 @@ def neighborhood_PCA(query_points, cloud_points, radius, use_tqdm=False):
     kdtree = KDTree(cloud_points)
 
     neighborhoods = kdtree.query_radius(query_points, radius)
-    n_neighbor = len(neighborhoods)
 
     all_eigenvalues = np.zeros((query_points.shape[0], 3))
     all_eigenvectors = np.zeros((query_points.shape[0], 3, 3))
+    all_n_neighbors = np.zeros(query_points.shape[0])
 
     if use_tqdm:
         disp = tqdm
@@ -81,8 +81,9 @@ def neighborhood_PCA(query_points, cloud_points, radius, use_tqdm=False):
         val, vec = local_PCA(cloud_points[ind,:])
         all_eigenvalues[i] = val
         all_eigenvectors[i] = vec
+        all_n_neighbors[i] = len(ind)
 
-    return all_eigenvalues, all_eigenvectors, float(n_neighbor)
+    return all_eigenvalues, all_eigenvectors, all_n_neighbors
 
 
 def compute_features(query_points, cloud_points, radius, use_tqdm=False):

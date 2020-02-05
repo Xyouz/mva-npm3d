@@ -64,6 +64,7 @@ class FeaturesExtractor:
         """
         Initiation method called when an object of this class is created. This is where you can define parameters
         """
+        self.n_features = 10
 
         # Neighborhood radius
         self.radius = 0.5
@@ -95,7 +96,7 @@ class FeaturesExtractor:
         ply_files = [f for f in listdir(path) if f.endswith('.ply')]
 
         # Initiate arrays
-        training_features = np.empty((0, 9))
+        training_features = np.empty((0, self.n_features))
         training_labels = np.empty((0,))
 
         # Loop over each training cloud
@@ -153,7 +154,7 @@ class FeaturesExtractor:
         ply_files = [f for f in listdir(path) if f.endswith('.ply')]
 
         # Initiate arrays
-        test_features = np.empty((0, 9))
+        test_features = np.empty((0, self.n_features))
 
         # Loop over each training cloud
         for i, file in enumerate(ply_files):
