@@ -67,6 +67,7 @@ def neighborhood_PCA(query_points, cloud_points, radius, use_tqdm=False):
     kdtree = KDTree(cloud_points)
 
     neighborhoods = kdtree.query_radius(query_points, radius)
+    n_neighbor = len(neighborhoods)
 
     all_eigenvalues = np.zeros((query_points.shape[0], 3))
     all_eigenvectors = np.zeros((query_points.shape[0], 3, 3))
@@ -81,13 +82,13 @@ def neighborhood_PCA(query_points, cloud_points, radius, use_tqdm=False):
         all_eigenvalues[i] = val
         all_eigenvectors[i] = vec
 
-    return all_eigenvalues, all_eigenvectors
+    return all_eigenvalues, all_eigenvectors, float(n_neighbor)
 
 
 def compute_features(query_points, cloud_points, radius, use_tqdm=False):
 
     # Compute the features for all query points in the cloud
-    val, vec = neighborhood_PCA(query_points, cloud_points, radius, use_tqdm)
+    val, vec, n_neighbor = neighborhood_PCA(query_points, cloud_points, radius, use_tqdm)
   
     e1 = val[:,2] + 1e-10
     e2 = val[:,1]
@@ -108,7 +109,7 @@ def compute_features(query_points, cloud_points, radius, use_tqdm=False):
     normal = vec[:,:,0]
     V = 2 * np.arcsin(np.abs(normal@ez)) / np.pi
 
-    return V, L, P, S, O, A, E, Sigma, C
+    return V, L, P, S, O, A, E, Sigma, C, n_neighbor
 
 
 # ------------------------------------------------------------------------------------------
