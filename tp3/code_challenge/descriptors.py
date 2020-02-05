@@ -110,7 +110,7 @@ def compute_features(query_points, cloud_points, radius, use_tqdm=False):
     normal = vec[:,:,0]
     V = 2 * np.arcsin(np.abs(normal@ez)) / np.pi
 
-    n_neighbor = (n_neighbor - n_neighbor.mean()) / n_neighbor.var()
+    # n_neighbor = (n_neighbor - n_neighbor.mean()) / n_neighbor.var()
 
     return V, L, P, S, O, A, E, Sigma, C, n_neighbor
 
