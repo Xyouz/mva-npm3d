@@ -39,8 +39,8 @@ import time
 from os import listdir
 from os.path import exists, join
 
-from tqdm import tqdm
-
+# Import xgb classifier
+import xgboost as xgb
 
 # ----------------------------------------------------------------------------------------------------------------------
 #
@@ -239,8 +239,8 @@ if __name__ == '__main__':
     print('Training Random Forest')
     t0 = time.time()
 
-    # Create and train a random forest with scikit-learn
-    clf = RandomForestClassifier()
+    # Create and train a xgboost classifier
+    clf = xgb.XGBClassifier()
     clf.fit(training_features, training_labels)
 
     t1 = time.time()
