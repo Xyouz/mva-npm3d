@@ -98,7 +98,7 @@ def compute_features(query_points, cloud_points, radius, use_tqdm=False):
     S = e3 / e1
     O = (e1*e2*e3)**(1/3)
     A = 1 - e3/e1
-    E = - np.sum(val * np.log(val + 1e-10), axis=1)
+    E = - np.sum(val * np.log(val + 1e-8), axis=1)
     Sigma = val.sum(axis=1)
     C = e3 / (Sigma + 1e-10)
 
