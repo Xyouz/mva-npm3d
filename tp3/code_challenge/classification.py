@@ -236,7 +236,7 @@ if __name__ == '__main__':
     # ********************************
     #
 
-    print('Training Random Forest')
+    print('Training XGBoost')
     t0 = time.time()
 
     # Create and train a xgboost classifier
