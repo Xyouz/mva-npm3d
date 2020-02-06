@@ -8,6 +8,13 @@ class Material():
     def f(self, wi, wo, n):
         pass
 
+    def __add__(self, other):
+        result = Material()
+        def f(wi, wo, n):
+            return self.f(wi,wo,n) + other.f(wi,wo,n)
+        result.f = f 
+        return result
+
 class Lambert(Material):
     def __init__(self, albedo, diffuse):
         super().__init__()
@@ -20,17 +27,24 @@ class Lambert(Material):
 class BlinnPhong(Material):
     def __init__(self,diffuse,shine):
         super().__init__()
-        self.diffuse = diffuse
+        self.diffuse = np.array(diffuse)
         self.shine = shine
 
     def f(self, wo, wi, n):
         mid = wo + wi
         wh = mid / np.linalg.norm(mid)
         return self.diffuse * np.dot(n,wh)**self.shine
+
+class Cook(Material):
+    def __init__(self, roughness, metal, specular):
+        pass
+    
+    def f(self, wo, wi, n):
+        pass
     
 class LightSource():
     def __init__(self, position, color, intensity):
-        self.position = np.array(position).reshape(3,1)
+        self.position = np.array(position)
         self.color = np.array(color)
         self.intensity = intensity
 
@@ -39,16 +53,18 @@ def shade(normalimage, material, lightsources):
     render = np.zeros((nlig, ncol, 3))
 
     for i, j in np.ndindex(nlig, ncol):
-        if np.all(normalimage[i,j,:3] <= 3/255):
+        if False and np.all(normalimage[i,j,:3] <= 3/255):
             render[i,j] = [0.,0.,0]
         else:
             for ls in lightsources:
-                n = normalimage[i,j,:3] - 0.5
-                wo = np.array([-(2*i - nlig)/nlig, -(2*j - ncol)/ncol,-1]).reshape(3,1)
-                wi = ls.position + wo
+                n = 2 * (normalimage[i,j,:3]-0.5)
+                x = (2*j - ncol)/ncol
+                y = -(2*i - nlig)/ncol
+                wo = np.array([-x, -y ,1.5])
+                wi = ls.position - np.array([x,y,0])
                 f = material.f(wo, wi, n)
                 Li =  ls.intensity * ls.color
-                render[i,j] += f * Li * np.dot(n, wi)
+            render[i,j] += np.clip(f * Li * np.dot(n, wi), 0, None)
     return render 
 
 if __name__ == "__main__":
@@ -64,12 +80,18 @@ if __name__ == "__main__":
         plt.show()
 
     # Define materials and light source
-    material = Lambert([1, 1., 1], 3)
-    light_source1 = LightSource([1,1.,1], [1.,0.,0.], 1)
-    light_source2 = LightSource([1,-1.,1], [0.,0.,1.], 0.5)
+    # lambert = Lambert([0.3, 0.8, 0.5], 3)
+    lambert = Lambert([1.,1.,1.],2)
+    blinn = BlinnPhong([1,1,1.],2)
+    material = lambert + blinn
 
-    render = shade(normalimage, material, [light_source1, light_source2])
+    light_source1 = LightSource([0,1.,1.0], [1.,1.,1.], 0.5)
+    # light_source2 = LightSource([1.,0.,1.], [1.,0.,0.], 0.75)
+    # light_source3 = LightSource([0,0.,0], [1.,1,1.], 1)
 
+    render = shade(normalimage, material, [light_source1])#, light_source2])#, light_source3])
+
+    # print(render.min(), render.max())
     plt.imshow(render)
     plt.show()
 
