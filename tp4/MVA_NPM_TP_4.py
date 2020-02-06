@@ -83,20 +83,20 @@ def shade(normalimage, material, lightsources):
         else:
             for ls in lightsources:
                 n = 2 * (normalimage[i,j,:3]-0.5)
-                n = n/np.linalg.norm(n)
+                #n = n/np.linalg.norm(n)
                 x = (2*j - ncol)/ncol
                 y = -(2*i - nlig)/ncol
                 wo = np.array([-x, -y ,1.5])
-                wo = wo/np.linalg.norm(wo)
+                #wo = wo/np.linalg.norm(wo)
                 wi = ls.position - np.array([x,y,0])
-                wi = wi/np.linalg.norm(wi)
+                #wi = wi/np.linalg.norm(wi)
                 f = material.f(wo, wi, n)
                 Li =  ls.intensity * ls.color
                 render[i,j] += np.clip(f * Li * np.dot(n, wi), 0, None)
     return render 
 
 if __name__ == "__main__":
-    imagefile = "nmap3.png"
+    imagefile = "normal.png"
     renderfile = "render.png"
 
     # Read normal image
