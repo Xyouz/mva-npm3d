@@ -119,7 +119,6 @@ if __name__ == "__main__":
     light_source3 = LightSource([0,-1.,1.], [0,0,1.], 0.4)
 
     render = shade(normalimage, material, [light_source1, light_source2, light_source3])
-    render /= render.max()
     
     plt.imshow(render)
     plt.show()
