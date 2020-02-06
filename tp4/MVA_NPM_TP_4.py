@@ -96,7 +96,7 @@ def shade(normalimage, material, lightsources):
     return render 
 
 if __name__ == "__main__":
-    imagefile = "normal.png"
+    imagefile = "nmap3.png"
     renderfile = "render.png"
 
     # Read normal image
@@ -111,12 +111,12 @@ if __name__ == "__main__":
     # lambert = Lambert([0.3, 0.8, 0.5], 3)
     lambert = Lambert([1.,1.,1.],2)
     blinn = BlinnPhong([1,1,1.],2)
-    cook = Cook(0.7, 0.5, [0,0,1])
-    material = lambert + blinn + cook
+    cook = Cook(0.7, 0.25, [0,0,1])
+    material = lambert + blinn# + cook
 
     light_source1 = LightSource([0,1.,1.], [1.,1.,1.], 0.75)
-    light_source2 = LightSource([1.,0.,1.], [1.,0.,0.], 0.4)
-    light_source3 = LightSource([0,-1.,1.], [0,0,1.], 0.4)
+    light_source2 = LightSource([1.,0.,1.], [1.,0.1,0.3], 0.4)
+    light_source3 = LightSource([-1,0.,1.], [0.1,0.4,1.], 0.4)
 
     render = shade(normalimage, material, [light_source1, light_source2, light_source3])
     
