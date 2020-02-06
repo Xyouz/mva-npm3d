@@ -37,10 +37,35 @@ class BlinnPhong(Material):
 
 class Cook(Material):
     def __init__(self, roughness, metal, specular):
-        pass
+        self.roughness = roughness
+        self.alpha_sq = self.roughness ** 4
+        self.metal = metal
+        self.spec = np.array(specular)
     
     def f(self, wo, wi, n):
-        pass
+        mid = wo + wi
+        wh = mid / np.linalg.norm(mid)
+
+        D = self.alpha_sq / (np.pi *(np.dot(n,wh)**2*(self.alpha_sq-1)+1)**2)
+        
+        k = (self.roughness + 1)**2 / 8
+        nwi = np.dot(n,wi)
+        Gi = nwi/(nwi*(1-k)+k)
+
+        nwo = np.dot(n,wo)
+        Go = nwo/(nwo*(1-k)+k)
+
+        G = Gi * Go
+
+        c1 = -5.55473
+        c2 = -6.98316
+        ih = np.dot(wh, wi)
+        F = self.metal + (1 - self.metal)*2**((c1*ih + c2)*ih)
+
+        return D*F*G/(4 * np.dot(n,wi) * np.dot(n,wo))
+        
+        
+
     
 class LightSource():
     def __init__(self, position, color, intensity):
@@ -58,13 +83,16 @@ def shade(normalimage, material, lightsources):
         else:
             for ls in lightsources:
                 n = 2 * (normalimage[i,j,:3]-0.5)
+                n = n/np.linalg.norm(n)
                 x = (2*j - ncol)/ncol
                 y = -(2*i - nlig)/ncol
                 wo = np.array([-x, -y ,1.5])
+                wo = wo/np.linalg.norm(wo)
                 wi = ls.position - np.array([x,y,0])
+                wi = wi/np.linalg.norm(wi)
                 f = material.f(wo, wi, n)
                 Li =  ls.intensity * ls.color
-            render[i,j] += np.clip(f * Li * np.dot(n, wi), 0, None)
+                render[i,j] += np.clip(f * Li * np.dot(n, wi), 0, None)
     return render 
 
 if __name__ == "__main__":
@@ -75,7 +103,7 @@ if __name__ == "__main__":
     normalimage = plt.imread(imagefile)
 
     # Display normal image
-    if False:
+    if True:
         plt.imshow(normalimage)
         plt.show()
 
@@ -83,16 +111,18 @@ if __name__ == "__main__":
     # lambert = Lambert([0.3, 0.8, 0.5], 3)
     lambert = Lambert([1.,1.,1.],2)
     blinn = BlinnPhong([1,1,1.],2)
-    material = lambert + blinn
+    cook = Cook(0.7, 0.5, [0,0,1])
+    material = lambert + blinn + cook
 
-    light_source1 = LightSource([0,1.,1.0], [1.,1.,1.], 0.5)
-    # light_source2 = LightSource([1.,0.,1.], [1.,0.,0.], 0.75)
-    # light_source3 = LightSource([0,0.,0], [1.,1,1.], 1)
+    light_source1 = LightSource([0,1.,1.], [1.,1.,1.], 0.75)
+    light_source2 = LightSource([1.,0.,1.], [1.,0.,0.], 0.4)
+    light_source3 = LightSource([0,-1.,1.], [0,0,1.], 0.4)
 
-    render = shade(normalimage, material, [light_source1])#, light_source2])#, light_source3])
-
-    # print(render.min(), render.max())
+    render = shade(normalimage, material, [light_source1, light_source2, light_source3])
+    render /= render.max()
+    
     plt.imshow(render)
     plt.show()
 
+    print(render.min(), render.max())
     plt.imsave(renderfile, render)
