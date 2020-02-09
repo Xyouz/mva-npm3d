@@ -114,9 +114,9 @@ if __name__ == "__main__":
     cook = Cook(0.7, 0.25, [0,0,1])
     material = lambert + blinn# + cook
 
-    light_source1 = LightSource([0,1.,1.], [1.,1.,1.], 0.75)
-    light_source2 = LightSource([1.,0.,1.], [1.,0.1,0.3], 0.4)
-    light_source3 = LightSource([-1,0.,1.], [0.1,0.4,1.], 0.4)
+    light_source1 = LightSource([0,1.,1.], [1.,1.,1.], 0.5)
+    light_source2 = LightSource([1.,0.,1.], [1.,0.1,0.3], 0.3)
+    light_source3 = LightSource([-1,0.,1.], [0.1,0.4,1.], 0.3)
 
     render = shade(normalimage, material, [light_source1, light_source2, light_source3])
     
