@@ -8,11 +8,28 @@ class Material():
     def f(self, wi, wo, n):
         pass
 
+    def shade(self, normal, light):
+        nlig, ncol, _ = normalimage.shape
+        render = np.zeros((nlig, ncol, 3))
+
+        i,j = np.meshgrid(range(nlig), range(ncol),indexing='ij')
+        i = -(2*i - nlig)/ncol
+        j = (2*j - ncol)/ncol
+
+        wo = np.stack((-j, -i, 1.5 * np.ones_like(i)), axis=-1)
+        wi = light.position - np.stack((-j, -i, np.zeros_like(i)), axis=-1)
+
+        f = self.f(wi, wo, normal)
+
+        Li = light.intensity * light.color
+        render = np.clip(f*Li*np.sum(normal[:,:,:3]*wi,axis=2,keepdims=True), 0, None)
+        return render 
+
     def __add__(self, other):
         result = Material()
         def f(wi, wo, n):
             return self.f(wi,wo,n) + other.f(wi,wo,n)
-        result.f = f 
+        result.f = f
         return result
 
 class Lambert(Material):
@@ -23,6 +40,8 @@ class Lambert(Material):
     
     def f(self, wo, wi, n):
         return self.albedo * self.diffuse / np.pi
+    
+
 
 class BlinnPhong(Material):
     def __init__(self,diffuse,shine):
@@ -103,7 +122,7 @@ if __name__ == "__main__":
     normalimage = plt.imread(imagefile)
 
     # Display normal image
-    if True:
+    if False:
         plt.imshow(normalimage)
         plt.show()
 
@@ -118,7 +137,7 @@ if __name__ == "__main__":
     light_source2 = LightSource([1.,0.,1.], [1.,0.1,0.3], 0.3)
     light_source3 = LightSource([-1,0.,1.], [0.1,0.4,1.], 0.3)
 
-    render = shade(normalimage, material, [light_source1, light_source2, light_source3])
+    render = material.shade(normalimage, light_source1) #, light_source2, light_source3])
     
     plt.imshow(render)
     plt.show()
