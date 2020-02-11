@@ -22,7 +22,7 @@ class Material():
         f = self.f(wi, wo, normal)
 
         Li = light.intensity * light.color
-        render = np.clip(f*Li*np.sum(normal[:,:,:3]*wi,axis=2,keepdims=True), 0, None)
+        render = np.clip(f*Li*np.sum(normal*wi,axis=-1,keepdims=True), 0, None)
         return render 
 
     def __add__(self, other):
@@ -52,7 +52,7 @@ class BlinnPhong(Material):
     def f(self, wo, wi, n):
         mid = wo + wi
         wh = mid / np.linalg.norm(mid)
-        return self.diffuse * np.dot(n,wh)**self.shine
+        return self.diffuse * np.sum(n*wh,axis=-1,keepdims=True)**self.shine
 
 class Cook(Material):
     def __init__(self, roughness, metal, specular):
@@ -137,7 +137,11 @@ if __name__ == "__main__":
     light_source2 = LightSource([1.,0.,1.], [1.,0.1,0.3], 0.3)
     light_source3 = LightSource([-1,0.,1.], [0.1,0.4,1.], 0.3)
 
-    render = material.shade(normalimage, light_source1) #, light_source2, light_source3])
+    render = blinn.shade(normalimage[:,:,:3], light_source1) #, light_source2, light_source3])
+    
+    plt.imshow(render)
+    plt.show()
+    render = shade(normalimage[:,:,:3],blinn ,[light_source1]) #, light_source2, light_source3])
     
     plt.imshow(render)
     plt.show()
