@@ -13,19 +13,24 @@ class Material():
         render = np.zeros((nlig, ncol, 3))
 
         i,j = np.meshgrid(range(nlig), range(ncol),indexing='ij')
-        i = -(2*i - nlig)/ncol
-        j = (2*j - ncol)/ncol
+        i = -(2*i - nlig)/nlig
+        j = (2*j - ncol)/nlig
 
-        wo = np.stack((-j, -i, 1.5 * np.ones_like(i)), axis=-1)
-        
+        wo = np.stack((-i, -j, 1.5 * np.ones_like(i)), axis=-1)
+        wo = wo / np.linalg.norm(wo, axis=-1, keepdims=True)
+
         for light in lights:
-            wi = light.position - np.stack((-j, -i, np.zeros_like(i)), axis=-1)
+            wi = light.position - np.stack((j, i, np.zeros_like(i)), axis=-1)
+            wi = wi / np.linalg.norm(wi, axis=-1, keepdims=True)
 
             f = self.f(wo, wi, normal)
 
             Li = light.intensity * light.color
             nwi = np.sum(normal*wi,axis=-1,keepdims=True)
-            render += np.clip(f*Li*nwi, 0, None)
+            res = f * Li * nwi
+            # low = np.percentile(res, 0)
+            # high = np.percentile(res, 100)
+            render += np.clip(f*Li*nwi, 0, None) #max(0,low), high)
         return render 
 
     def __add__(self, other):
@@ -59,11 +64,12 @@ class BlinnPhong(Material):
         return self.diffuse * nwh**self.shine
 
 class Cook(Material):
-    def __init__(self, alpha, specular):
+    def __init__(self, alpha, specular, metal):
         self.alpha = alpha
         self.roughness = np.sqrt(self.alpha)
         self.k = (self.roughness + 1)**2/8
-        self.F0 = np.array(specular)
+        self.F0 = metal
+        self.spec = np.array(specular)
     
 
     def f(self, wo, wi, n):
@@ -75,7 +81,7 @@ class Cook(Material):
         nwo = np.sum(n*wo, axis=-1, keepdims=True)
 
         D = self.alpha**2 / (np.pi *(nwh**2*(self.alpha**2-1)+1)**2)
-        
+
         k = (self.roughness + 1)**2 / 8
         
         Gi = nwi/(nwi*(1-k)+k)
@@ -86,7 +92,9 @@ class Cook(Material):
         c1 = -5.55473
         c2 = -6.98316
         oh = np.sum(wh * wo, axis=-1, keepdims=True)
-        F = self.F0 + (1 - self.F0)*2**((c1*oh + c2)*oh)
+        F = self.spec * (self.F0 + (1 - self.F0)*2**((c1*oh + c2)*oh))
+
+        F[(nwi <= 0).squeeze()] = 0
 
         return D*F*G/(4 * nwi * nwo)
         
@@ -97,33 +105,21 @@ class LightSource():
         self.position = np.array(position)
         self.color = np.array(color)
         self.intensity = intensity
-
-def shade(normalimage, material, lightsources):
-    nlig, ncol, _ = normalimage.shape
-    render = np.zeros((nlig, ncol, 3))
-
-    for i, j in np.ndindex(nlig, ncol):
-        for ls in lightsources:
-            n =  (normalimage[i,j,:3]-0.5)
-            n = n/np.linalg.norm(n)
-            x = (2*j - ncol)/ncol
-            y = -(2*i - nlig)/ncol
-            wo = np.array([-x, -y ,1.5])
-            wo = wo/np.linalg.norm(wo)
-            wi = ls.position - np.array([x,y,0])
-            wi = wi/np.linalg.norm(wi)
-            f = material.f(wo, wi, n)
-            Li =  ls.intensity * ls.color
-            render[i,j] += np.clip(f * Li * np.dot(n, wi), 0, None)
-    return render 
+    
+    def set_position(self, position):
+        self.position = np.array(position)
 
 if __name__ == "__main__":
     imagefile = "normal.png"
     renderfile = "render.png"
 
     # Read normal image
-    normalimage = plt.imread(imagefile)
-
+    normalimage = plt.imread(imagefile)[:,:,:3]
+    mask = normalimage.max(axis=2) <= 4/255
+    normalimage = 2 * normalimage -1
+    normalimage = normalimage / np.linalg.norm(normalimage, axis=-1, keepdims=True)
+    normalimage[mask] = 0
+    
     # Display normal image
     if False:
         plt.imshow(normalimage)
@@ -131,37 +127,40 @@ if __name__ == "__main__":
 
     # Define materials and light source
     # lambert = Lambert([0.3, 0.8, 0.5], 3)
-    lambert = Lambert([0.70,0.62,0.62],1)
-    lambert2 = Lambert([0.70,0.62,0.62],0.6)
+    lambert = Lambert([0.80,0.42,0.42],1)
 
-    blinn = BlinnPhong([0.70,0.62,0.62],0.75)
+    blinn = BlinnPhong([0.80,0.42,0.42],5)
 
-    cook = Cook(0.3, [0.70,0.62,0.62])
-    material = blinn
+    cook = Cook(0.5, [0.8,0.42,0.42], 1)
+    material = cook
 
-    light_source1 = LightSource([0.,0,1.0], [1.,1.,1.], 0.5)
-    light_source2 = LightSource([1.,0.,1.], [1.,0.1,0.3], 5)
-    light_source3 = LightSource([-1,0.,1.], [0.1,0.4,1.], 5)
+    light = LightSource([0.,0,0.5], [1.,1.,1.], 50)
+
 
     fig, ax = plt.subplots()
-    render = lambert.shade(normalimage[:,:,:3], [light_source1])
+    render = material.shade(normalimage[:,:,:3], [light])
+    #render = render / render.max()
+
     im = plt.imshow(render)
     nlig,ncol,_ = render.shape
 
     from matplotlib.widgets import Slider
-    axx = plt.axes([0.25, 0.1, 0.65, 0.03])
-    axy = plt.axes([0.25, 0.15, 0.65, 0.03])
-    lx = Slider(axx,"x",-1.,1.,0)
-    ly = Slider(axy,"y",-1.,1.,0)
+    #axx = plt.axes([0.25, 0.1, 0.65, 0.03])
+    #axy = plt.axes([0.25, 0.15, 0.65, 0.03])
+    #lx = Slider(axx,"x",-1.,1.,0)
+    #ly = Slider(axy,"y",-1.,1.,0)
 
-    def onclick(event):
-        x = 5*(event.x-ncol/2)/ncol
-        y = -5*(event.y-nlig/2)/ncol
-        print(x,y)
-        light = LightSource([x,y,1.], [1.,1.,1.], 1)
-        render = lambert.shade(normalimage[:,:,:3],[light])
+    def onmotion(event):
+        if event.xdata is None or event.ydata is None: return
+        x = (2*event.xdata-ncol)/nlig
+        y = -(2*event.ydata-nlig)/nlig
+        light.set_position([x,y,0.5])
+        render = material.shade(normalimage[:,:,:3],[light])
+        #render = render / render.max()
         im.set_data(render)
-    cid = fig.canvas.mpl_connect('button_press_event', onclick)
+        plt.draw()
+
+    cid = fig.canvas.mpl_connect('motion_notify_event', onmotion)
 
     #lx.on_changed(update)
     plt.show()
