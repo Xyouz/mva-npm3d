@@ -3,6 +3,10 @@
 *.npy
 MiniDijon9.txt
 
+# Renders
+tmp*.png
+*.mpg
+
 # Tex files
 *.aux
 *.log
