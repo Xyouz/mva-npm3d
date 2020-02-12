@@ -261,7 +261,7 @@ if __name__ == "__main__":
 
         plt.figure(figsize=(15,10))
         for i, x in tqdm(enumerate(np.linspace(-1,1,args.n_frames))):
-            y = 1.5*np.sin(5*np.pi*x)
+            y = 1.5*np.sin(2*np.pi*x)
             light.set_position([x,y,1.0])
             render =  shade(normalimage, material, [light])
             render = clip_render(render)
