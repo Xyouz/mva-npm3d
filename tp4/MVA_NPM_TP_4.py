@@ -152,7 +152,7 @@ if __name__ == "__main__":
     # Define materials
     if args.cook:
         LMin,  LMax = 45, 55
-        material = Cook(0.5, [0.8,0.42,0.42], 0.9)
+        material = Cook(5, [0.8,0.42,0.42], 0.02)
     elif args.blinn:
         LMin,  LMax = 0.5, 1
         material = BlinnPhong([0.80,0.42,0.42],5)
