@@ -152,8 +152,8 @@ if __name__ == "__main__":
         LMin,  LMax = 45, 55
         material = Cook(5, [0.8,0.42,0.42], 0.02)
     elif args.blinn:
-        LMin,  LMax = 0.5, 1
-        material = BlinnPhong([0.80,0.42,0.42],5)
+        LMin,  LMax = 0.5, 0.75
+        material = BlinnPhong([0.80,0.42,0.42],5) + Lambert([0.42,0.42,0.42],2)
     elif args.lambert:
         LMin,  LMax = 0.5, 0.75
         material = Lambert([0.42,0.42,0.42],2)
@@ -258,19 +258,17 @@ if __name__ == "__main__":
         light = LightSource([-1.,-1.,1.0], light_color(), light_intensity())
 
         plt.figure(figsize=(15,10))
-        for i, x in tqdm(enumerate(np.linspace(-1,1,args.n_frames))):
-            y = 1.5*np.sin(2*np.pi*x)
+        for i, x in enumerate(tqdm(np.linspace(-1,1,args.n_frames))):
+            y = np.sin(np.pi*x)
             light.set_position([x,y,1.0])
             render =  shade(normalimage, material, [light])
             render = clip_render(render)
-            plt.cla()
-            plt.imshow(render)
             fname = "tmp-{}.png".format(i)
-            plt.savefig(fname)
+            plt.imsave(fname, render)
             files.append(fname)
         
         subprocess.call("mencoder 'mf://tmp-*.png' -mf type=png:fps={} -ovc lavc "
-                    "-lavcopts vcodec=wmv2 -oac copy -o animation.mpg".format(args.fps), shell=True)
+                    "-lavcopts vcodec=mpeg4:mbd=2:trell:v4mv:turbo -oac copy -o animation.mpg".format(args.fps), shell=True)
 
         for fname in files:
             os.remove(fname)
