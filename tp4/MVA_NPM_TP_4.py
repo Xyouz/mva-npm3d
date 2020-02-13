@@ -110,9 +110,7 @@ def shade( normal, material, lights):
         Li = light.intensity * light.color
         nwi = np.sum(normal*wi,axis=-1,keepdims=True)
         res = f * Li * nwi
-        low = np.percentile(res, 0)
-        high = np.percentile(res, 100)
-        render += np.clip(f*Li*nwi, max(0,low), high)
+        render += np.clip(f*Li*nwi, 0, None)
     return render
 
 def clip_render(render, perc=5):
