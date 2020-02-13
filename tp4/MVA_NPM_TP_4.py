@@ -188,7 +188,7 @@ if __name__ == "__main__":
         render = clip_render(render)
 
         plt.imshow(render)
-        plt.savefig(renderfile)
+        plt.imsave(renderfile, render)
         plt.show()
     
     elif args.mode == "interactif":
