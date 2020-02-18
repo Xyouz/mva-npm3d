@@ -31,19 +31,46 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 # Hoppe surface reconstruction
 def compute_hoppe(points,normals,volume,number_cells,min_grid,length_cell):
-    return
+    x = min_grid[0] + length_cell[0] * np.arange(number_cells+1)
+    y = min_grid[1] + length_cell[1] * np.arange(number_cells+1)
+    z = min_grid[2] + length_cell[2] * np.arange(number_cells+1)
+    X, Y, Z = np.meshgrid(x, y, z)
+    XYZ = np.stack((X,Y,Z), 3).reshape(-1,3)
+
+    tree = KDTree(points)
+    closest = tree.query(XYZ, 1, return_distance=False).squeeze()
+    hoppe_fun = np.sum(normals[closest] * (XYZ-points[closest]), axis=1)
+    volume[:,:] = hoppe_fun.reshape(number_cells+1, number_cells+1, number_cells+1)
 
 				
 # EIMLS surface reconstruction
 def compute_eimls(points,normals,volume,number_cells,min_grid,length_cell):
-    return
-				
-				
-				
+    x = min_grid[0] + length_cell[0] * np.arange(number_cells+1)
+    y = min_grid[1] + length_cell[1] * np.arange(number_cells+1)
+    z = min_grid[2] + length_cell[2] * np.arange(number_cells+1)
+    X, Y, Z = np.meshgrid(x, y, z)
+    XYZ = np.stack((X,Y,Z), 3).reshape(-1,3)
+
+    k = 10
+    
+    tree = KDTree(points)
+    closest = tree.query(XYZ, k, return_distance=False).squeeze()
+    
+    xpi = XYZ[:,np.newaxis,:] - points[closest]
+    xpi_norm = np.linalg.norm(xpi, axis=2)
+    h = np.clip(xpi_norm, 0.003, None)
+
+    theta = np.exp(-(xpi_norm**2)/h**2)
+    
+    nxpi = np.sum(normals[closest] * xpi, axis=2)
+    eiml_fun = np.sum(nxpi * theta, axis=1) / np.sum(theta, axis = 1)
+
+    volume[:,:] = eiml_fun.reshape(number_cells+1, number_cells+1, number_cells+1)
+
 if __name__ == '__main__':
 
     # Path of the file
-    file_path = '../data/sphere_normals.ply'
+    file_path = '../data/bunny_normals.ply'
 
     # Load point cloud
     data = read_ply(file_path)
@@ -61,13 +88,13 @@ if __name__ == '__main__':
                 min_grid[j] = points[i,j]
             if (points[i,j] > max_grid[j]):
                 max_grid[j] = points[i,j]
-				
+
+    number_cells = 30
 	# Increase the bounding box of data points by decreasing min_grid and inscreasing max_grid
-    min_grid = min_grid - 0.10*(max_grid-min_grid)
-    max_grid = max_grid + 0.10*(max_grid-min_grid)
+    min_grid = min_grid - (max_grid-min_grid) / number_cells
+    max_grid = max_grid + (max_grid-min_grid) / number_cells
 
 	# Number_cells is the number of voxels in the grid in x, y, z axis
-    number_cells = 10 #100
     length_cell = np.array([(max_grid[0]-min_grid[0])/number_cells,(max_grid[1]-min_grid[1])/number_cells,(max_grid[2]-min_grid[2])/number_cells])
 	
 	# Create a volume grid to compute the scalar field for surface reconstruction
