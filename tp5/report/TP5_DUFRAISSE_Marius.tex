@@ -52,5 +52,39 @@ Pour le lapin la  meilleure méthode est marching cube avec un Filter Scale de 3
 
 Pour le dragon la meilleure méthode est Poisson avec une profondeur de 12 ce qui donne un modèle avec 450920 vertex et 901836 faces.
 
+\paragraph{Question 3.}
+L'isosurface obtenue pour une sphère avec la fonction de Hoppe est visible Figure \ref{fig:shoppe}.
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.5\linewidth]{hoppe_sphere}
+	\caption{Isosurface obtenue pour une sphère en utilisant la fonction de Hoppe et une grille de taille 10.}
+	\label{fig:shoppe}
+\end{figure}
+
+\paragraph{Question 4.}
+L'isosurface obtenue pour le lapin avec la fonction de Hoppe est visible Figure \ref{fig:bhoppe}.
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.5\linewidth]{bunnyhoppe}
+	\caption{Isosurface obtenue pour le lapin en utilisant la fonction de Hoppe et une grille de taille 25.}
+	\label{fig:bhoppe}
+\end{figure}
+
+\paragraph{Question 5.}
+Les différences entre les résultats en utilisant EIMLS et Hoppe sont présentés Figure \ref{fig:eimls}. La version EIMLS est meilleure, notamment pour l'oreille droite qui est plus régulière par rapport aux résultats obtenus avec Hoppe : cela vient surement du fait que les normales dans cette région varient beaucoup et hoppe est donc peu stable.
+\begin{figure}[h]
+	\centering
+	\begin{minipage}{0.47\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{bunnyhoppe30.png}
+	\end{minipage}\hfill
+	\begin{minipage}{0.47\linewidth}
+		\centering
+		\includegraphics[width=\linewidth]{bunnyeimls30.png}
+	\end{minipage}
+	\caption{Résultats obtenus pour le modèle du lapin. À gauche en utilisant la fonction de Hoppe, à droite EIMLS; dans les deux cas avec une grille de taille 30.}
+	\label{fig:eimls}
+\end{figure}
+
 \end{document}
 
