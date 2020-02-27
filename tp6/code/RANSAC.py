@@ -43,22 +43,20 @@ import time
 
 
 def compute_plane(points):
+    point = points.mean(axis=0)
 
-    
-    point = np.zeros((3,1))
-    normal = np.zeros((3,1))
-    
-    # TODO
-    
+    delta = points[1:] - points[0]
+    normal = np.cross(delta[0], delta[1])
+    normal = normal / np.linalg.norm(normal)
     return point, normal
 
 
-def in_plane(points, ref_pt, normal, threshold_in=0.1):
-    
-    indices = np.zeros(len(points), dtype=bool)
-    
+def in_plane(points, ref_pt, normal, threshold_in=0.1):  
     # TODO: return a boolean mask of points in range
-        
+    diff = points - ref_pt.squeeze()
+    dist = np.abs(np.sum(diff * normal.squeeze(), axis=1))
+    indices = dist < threshold_in
+
     return indices
 
 
@@ -67,16 +65,40 @@ def RANSAC(points, NB_RANDOM_DRAWS=100, threshold_in=0.1):
     best_ref_pt = np.zeros((3,1))
     best_normal = np.zeros((3,1))
     
-    # TODO:
+    n_point = len(points)
+
+    max_vote = 0
+
+    for _ in range(NB_RANDOM_DRAWS):
+        points_id = np.random.choice(n_point,size=3)
+        ref, norm = compute_plane(points[points_id])
+
+        current_vote = in_plane(points, ref, norm).sum()
+        if current_vote > max_vote:
+            max_vote = current_vote
+            best_ref_pt = ref
+            best_normal = norm
                 
     return best_ref_pt, best_normal
 
 
 def multi_RANSAC(points, NB_RANDOM_DRAWS=100, threshold_in=0.1, NB_PLANES=2):
     
-    # TODO:
-    
-    return plane_inds, remaining_inds, plane_labels
+    plane_inds = np.zeros(len(points), dtype=bool)
+    remaining_inds = np.ones(len(points), dtype=bool)
+    labels = np.zeros(len(points), dtype=int)
+
+    for label in range(NB_PLANES):
+        ind = remaining_inds.nonzero()[0]
+        ref, normal = RANSAC(points[ind], NB_RANDOM_DRAWS, threshold_in)
+        new_plan = in_plane(points[ind], ref, normal, threshold_in)
+        np_ind = new_plan.nonzero()[0]
+        plane_inds[ind[np_ind]] = True
+        labels[ind[np_ind]] = label
+        remaining_inds[ind[np_ind]] = False
+
+    plane_inds = plane_inds.nonzero()[0]
+    return plane_inds, remaining_inds.nonzero()[0], labels[plane_inds]
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -112,7 +134,7 @@ if __name__ == '__main__':
     # ***********************************************************
     #
 
-    if True:
+    if False:
 
         # Define parameter
         threshold_in = 0.1
@@ -132,7 +154,6 @@ if __name__ == '__main__':
         t1 = time.time()
         print('plane extraction done in {:.3f} seconds'.format(t1 - t0))
         plane_inds = points_in_plane.nonzero()[0]
-
         # Save the 3 points and their corresponding plane for verification
         pts_clr = np.zeros_like(pts)
         pts_clr[:, 0] = 1.0
@@ -147,7 +168,7 @@ if __name__ == '__main__':
     # ***********************************
     #
 
-    if True:
+    if False:
 
         # Define parameters of RANSAC
         NB_RANDOM_DRAWS = 100
