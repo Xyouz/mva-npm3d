@@ -65,33 +65,57 @@ def compute_planarities_and_normals(points, radius):
 
     neighborhoods = kdtree.query_radius(points, radius)
 
-    all_eigenvalues = np.zeros((points.shape[0], 3))
-    all_eigenvectors = np.zeros((shape[0], 3, 3))
+    planarities = np.zeros(points.shape[0])
+    eigenvectors = np.zeros((points.shape[0], 3, 3))
 
     for i, ind in enumerate(neighborhoods):
-        val, vec = local_PCA(cloud_points[ind,:])
-        all_eigenvalues[i] = val
-        all_eigenvectors[i] = vec
+        val, vec = local_PCA(points[ind,:])
+        planarities[i] = (val[1] - val[0]) / val[2]
+        eigenvectors[i] = vec
 
-    planarities = (val[:,1] - val[:,0]) / val[:,2]
-    normals = all_eigenvectors[:,:,0]
+    normals = eigenvectors[:,:,0]
+    normals = normals / np.linalg.norm(normals, axis=-1, keepdims=True)
     return planarities, normals
 
 
-def region_criterion(p1, p2, n1, n2):
-    return True
+def region_criterion(p1, p2, n1, n2, t1=0.1, t2=5):
+    vec = p2 - p1
+    dist = np.dot(n1, vec)
+
+    angle = 180 * np.arccos(n1@n2) / np.pi
+    
+    # Check angle in both directions as normals orientation tends to be unstable
+    return dist <= t1 and (angle <= t2 or angle >= 180 - t2)
 
 
-def queue_criterion(p):
-    return True
+def queue_criterion(p, t=0.1):
+    return p >= t
 
 
 def RegionGrowing(cloud, normals, planarities, radius):
 
     # TODO:
 
+    tree = KDTree(cloud)
+
     N = len(cloud)
     region = np.zeros(N, dtype=bool)
+
+    seed = np.random.choice(N)
+
+    region[seed] = True
+    Q = [seed]
+
+    while len(Q) != 0:
+        q = Q.pop()
+        neighbors = tree.query_radius(cloud[q].reshape(1,3), radius)
+        for p in neighbors[0]:
+            if region[p]:
+                continue
+            if region_criterion(cloud[q], cloud[p], normals[q], normals[p]):
+                region[p] = True
+                if queue_criterion(planarities[p]):
+                    Q.append(p)
 
     return region
 
@@ -145,6 +169,9 @@ if __name__ == '__main__':
 
     # Computes normals of the whole cloud
     t0 = time.time()
+    # print("Don't forget to use the real normals and planarities!!")
+    # normals = np.zeros((len(points),3))
+    # planarities = np.zeros(len(points))
     planarities, normals = compute_planarities_and_normals(points, radius)
     t1 = time.time()
     print('normals and planarities computation done in {:.3f} seconds'.format(t1 - t0))
@@ -158,7 +185,7 @@ if __name__ == '__main__':
     # ******************************
     #
 
-    if False:
+    if True:
         # Define parameters of Region Growing
         radius = 0.2
 
@@ -172,6 +199,7 @@ if __name__ == '__main__':
         plane_inds = region.nonzero()[0]
         remaining_inds = (1 - region).nonzero()[0]
 
+        labels = np.ones(len(points))
         # Save the best plane
         write_ply('../best_plane.ply',
                   [points[plane_inds], colors[plane_inds], labels[plane_inds], planarities[plane_inds]],
