@@ -78,7 +78,7 @@ def compute_planarities_and_normals(points, radius):
     return planarities, normals
 
 
-def region_criterion(p1, p2, n1, n2, t1=0.1, t2=5):
+def region_criterion(p1, p2, n1, n2, t1=0.2, t2=10):
     vec = p2 - p1
     dist = np.dot(n1, vec)
 
@@ -88,7 +88,7 @@ def region_criterion(p1, p2, n1, n2, t1=0.1, t2=5):
     return dist <= t1 and (angle <= t2 or angle >= 180 - t2)
 
 
-def queue_criterion(p, t=0.1):
+def queue_criterion(p, t=0.9):
     return p >= t
 
 
