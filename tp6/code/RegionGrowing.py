@@ -44,14 +44,37 @@ import time
 #   Here you can define usefull functions to be used in the main
 #
 
+def local_PCA(points):
+
+    bar = points.mean(axis=0)
+
+    centered = (points - bar)[:,:,np.newaxis]
+    cov = (np.matmul(centered, centered.transpose(0,2,1))).mean(axis=0)
+
+    eigenvalues, eigenvectors = np.linalg.eigh(cov)
+
+    return eigenvalues, eigenvectors
+
 
 def compute_planarities_and_normals(points, radius):
 
     normals = points * 0
     planarities = points[:, 0] * 0
 
-    # TODO:
+    kdtree = KDTree(points)
 
+    neighborhoods = kdtree.query_radius(points, radius)
+
+    all_eigenvalues = np.zeros((points.shape[0], 3))
+    all_eigenvectors = np.zeros((shape[0], 3, 3))
+
+    for i, ind in enumerate(neighborhoods):
+        val, vec = local_PCA(cloud_points[ind,:])
+        all_eigenvalues[i] = val
+        all_eigenvectors[i] = vec
+
+    planarities = (val[:,1] - val[:,0]) / val[:,2]
+    normals = all_eigenvectors[:,:,0]
     return planarities, normals
 
 
