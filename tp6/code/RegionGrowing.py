@@ -101,7 +101,7 @@ def RegionGrowing(cloud, normals, planarities, radius):
     N = len(cloud)
     region = np.zeros(N, dtype=bool)
 
-    seed = np.random.choice(N)
+    seed = planarities.argmax()
 
     region[seed] = True
     Q = [seed]
@@ -124,11 +124,20 @@ def multi_RegionGrowing(cloud, normals, planarities, radius, NB_PLANES=2):
 
     # TODO:
 
-    plane_inds = np.arange(0, 0)
-    plane_labels = np.arange(0, 0)
-    remaining_inds = np.arange(0, N)
+    plane_inds = np.zeros(len(points), dtype=bool)
+    remaining_inds = np.ones(len(points), dtype=bool)
+    labels = np.zeros(len(points), dtype=int)
 
-    return plane_inds, remaining_inds, plane_labels
+    for label in range(NB_PLANES):
+        ind = remaining_inds.nonzero()[0]
+        region = RegionGrowing(cloud[ind], normals[ind], planarities[ind], radius)
+        np_ind = region.nonzero()[0]
+        plane_inds[ind[np_ind]] = True
+        labels[ind[np_ind]] = label
+        remaining_inds[ind[np_ind]] = False
+
+    plane_inds = plane_inds.nonzero()[0]
+    return plane_inds, remaining_inds.nonzero()[0], labels[plane_inds]
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -185,7 +194,7 @@ if __name__ == '__main__':
     # ******************************
     #
 
-    if True:
+    if False:
         # Define parameters of Region Growing
         radius = 0.2
 
@@ -212,12 +221,12 @@ if __name__ == '__main__':
     # ******************************
     #
 
-    if False:
-        # Define parameters of multi_RANSAC
+    if True:
+        # Define parameters of multi_Region_Growing
         radius = 0.2
         NB_PLANES = 10
 
-        # Recursively find best plane by RANSAC
+        # Recursively find best plane by Region_Growing
         t0 = time.time()
         plane_inds, remaining_inds, plane_labels = multi_RegionGrowing(points, normals, planarities, radius, NB_PLANES)
         t1 = time.time()
