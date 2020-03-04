@@ -93,9 +93,6 @@ def queue_criterion(p, t=0.9):
 
 
 def RegionGrowing(cloud, normals, planarities, radius):
-
-    # TODO:
-
     tree = KDTree(cloud)
 
     N = len(cloud)
@@ -121,9 +118,6 @@ def RegionGrowing(cloud, normals, planarities, radius):
 
 
 def multi_RegionGrowing(cloud, normals, planarities, radius, NB_PLANES=2):
-
-    # TODO:
-
     plane_inds = np.zeros(len(points), dtype=bool)
     remaining_inds = np.ones(len(points), dtype=bool)
     labels = np.zeros(len(points), dtype=int)
