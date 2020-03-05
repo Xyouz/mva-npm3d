@@ -60,7 +60,7 @@ def in_plane(points, ref_pt, normal, threshold_in=0.1):
     return indices
 
 
-def RANSAC(points, NB_RANDOM_DRAWS=100, threshold_in=0.1):
+def RANSAC(points, NB_RANDOM_DRAWS=100, threshold_in=0.1, P=0.99):
     
     best_ref_pt = np.zeros((3,1))
     best_normal = np.zeros((3,1))
@@ -69,7 +69,13 @@ def RANSAC(points, NB_RANDOM_DRAWS=100, threshold_in=0.1):
 
     max_vote = 0
 
-    for _ in range(NB_RANDOM_DRAWS):
+    # The current estimate of the number of draws required to make sure the plane
+    # found is the best with probability at least P
+    max_draws = NB_RANDOM_DRAWS
+    draws = 0
+
+    while draws <= max_draws:
+        draws += 1
         points_id = np.random.choice(n_point,size=3)
         ref, norm = compute_plane(points[points_id])
 
@@ -78,7 +84,11 @@ def RANSAC(points, NB_RANDOM_DRAWS=100, threshold_in=0.1):
             max_vote = current_vote
             best_ref_pt = ref
             best_normal = norm
-                
+            
+            max_draws = np.log(1-P)/np.log(1 - (max_vote/len(points))**3)
+            max_draws = min(max_draws, NB_RANDOM_DRAWS)
+    
+    print("Plane found with {} draws".format(draws))
     return best_ref_pt, best_normal
 
 
@@ -168,10 +178,10 @@ if __name__ == '__main__':
     # ***********************************
     #
 
-    if False:
+    if True:
 
         # Define parameters of RANSAC
-        NB_RANDOM_DRAWS = 100
+        NB_RANDOM_DRAWS = 150
         threshold_in = 0.05
 
         # Find best plane by RANSAC
@@ -184,6 +194,8 @@ if __name__ == '__main__':
         points_in_plane = in_plane(points, best_ref_pt, best_normal, threshold_in)
         plane_inds = points_in_plane.nonzero()[0]
         remaining_inds = (1-points_in_plane).nonzero()[0]
+        
+        print("Number of points in the best extracted plane :", len(plane_inds), ", total number of points ", len(points))
 
         # Save the best extracted plane and remaining points
         write_ply('../best_plane.ply',
@@ -200,7 +212,7 @@ if __name__ == '__main__':
     if True:
 
         # Define parameters of multi_RANSAC
-        NB_RANDOM_DRAWS = 200
+        NB_RANDOM_DRAWS = 6000
         threshold_in = 0.05
         NB_PLANES = 5
 
