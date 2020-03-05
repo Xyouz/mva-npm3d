@@ -3,6 +3,9 @@
 *.npy
 MiniDijon9.txt
 
+# Some images
+tp6/report/*.bmp
+
 # Renders
 tmp*.png
 *.mpg
